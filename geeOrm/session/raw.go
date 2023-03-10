@@ -13,12 +13,22 @@ import (
 
 type Session struct {
 	db       *sql.DB         // 数据库引擎
+	tx       *sql.Tx         // 支持事务
 	dialect  dialect.Dialect // 类型转换
 	refTable *schema.Schema  // 表结构
 	clause   clause.Clause   // 生成 sql 语句
 	sql      strings.Builder // 传入 sql 语句
 	sqlVars  []interface{}   // 参数
 }
+
+type CommonDB interface {
+	Query(query string, args ...interface{}) (*sql.Rows, error)
+	QueryRow(query string, args ...interface{}) *sql.Row
+	Exec(query string, args ...interface{}) (sql.Result, error)
+}
+
+var _ CommonDB = (*sql.DB)(nil)
+var _ CommonDB = (*sql.Tx)(nil)
 
 func New(db *sql.DB, dialect dialect.Dialect) *Session {
 	return &Session{
@@ -34,7 +44,10 @@ func (s *Session) Clear() {
 	s.sqlVars = nil
 }
 
-func (s *Session) DB() *sql.DB {
+func (s *Session) DB() CommonDB {
+	if s.tx != nil {
+		return s.tx
+	}
 	return s.db
 }
 
