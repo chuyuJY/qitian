@@ -14,8 +14,8 @@ import (
 type Session struct {
 	db       *sql.DB         // 数据库引擎
 	tx       *sql.Tx         // 支持事务
-	dialect  dialect.Dialect // 类型转换
-	refTable *schema.Schema  // 表结构
+	dialect  dialect.Dialect // 类型的转换器
+	refTable *schema.Schema  // 表的结构
 	clause   clause.Clause   // 生成 sql 语句
 	sql      strings.Builder // 传入 sql 语句
 	sqlVars  []interface{}   // 参数

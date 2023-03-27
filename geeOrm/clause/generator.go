@@ -24,6 +24,7 @@ func init() {
 	generators[COUNT] = _count
 }
 
+// 生成 "?, ?, ?, " 格式的字符串
 func genBindVars(num int) string {
 	var vars []string
 	for i := 0; i < num; i++ {
@@ -50,10 +51,13 @@ func _values(values ...interface{}) (string, []interface{}) {
 		if bindStr == "" {
 			bindStr = genBindVars(len(v))
 		}
+		// 构造(?, ?, ?, ...)
 		sql.WriteString(fmt.Sprintf("(%v)", bindStr))
+		// 如果不是最后一个
 		if i+1 != len(values) {
 			sql.WriteString(", ")
 		}
+		// 实际数值放在一起
 		vars = append(vars, v...)
 	}
 	return sql.String(), vars

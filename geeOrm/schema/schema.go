@@ -18,7 +18,7 @@ type Field struct {
 type Schema struct {
 	Model      interface{}       // 被映射的对象
 	Name       string            // 表名
-	Fields     []*Field          // 字段名
+	Fields     []*Field          // 所有的字段信息
 	FieldNames []string          // 所有的字段名
 	fieldMap   map[string]*Field // 映射 [字段名: *Field]
 }
@@ -30,6 +30,7 @@ func (schema *Schema) GetField(name string) *Field {
 // Parse 将任意的对象解析为 Schema 实例
 func Parse(dest interface{}, d dialect.Dialect) *Schema {
 	// reflect.Indirect() 获取指针指向的实例
+	// reflect.Indirect() 获取指针指向的实例 等同于 .Elem()
 	modelType := reflect.Indirect(reflect.ValueOf(dest)).Type()
 	schema := &Schema{
 		Model:    dest,

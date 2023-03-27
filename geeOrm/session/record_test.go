@@ -15,5 +15,5 @@ var (
 
 func testRecordInit(t *testing.T) *Session {
 	t.Helper()
-	s := NewSession().Model(&User{})
+	s := New().Model(&User{})
 }

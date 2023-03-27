@@ -34,7 +34,7 @@ func (c *Clause) Set(name Type, vars ...interface{}) {
 	c.sqlVars[name] = vars
 }
 
-// Build 按照传入类型的顺序，构造最终的SQL语句
+// Build 按照传入子句类型的顺序，构造最终的SQL语句
 func (c *Clause) Build(orders ...Type) (string, []interface{}) {
 	var sqls []string
 	var vars []interface{}
