@@ -17,9 +17,11 @@ const (
 	AfterInsert  = "AfterInsert"
 )
 
-// CallMethod calls the registered hooks
+// CallMethod 调用注册的 method
+// method 是对象拥有的方法名, value 是对象的地址
 func (s *Session) CallMethod(method string, value interface{}) {
-	// s.RefTable().Model 或 value 即当前会话正在操作的对象，使用 MethodByName 方法反射得到该对象的方法。
+	// s.RefTable().Model 或 value 即当前会话正在操作的对象,
+	// 使用 MethodByName 方法反射得到该对象的方法。
 	fm := reflect.ValueOf(s.RefTable().Model).MethodByName(method)
 	if value != nil {
 		fm = reflect.ValueOf(value).MethodByName(method)

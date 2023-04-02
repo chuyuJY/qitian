@@ -24,7 +24,7 @@ func (s *Session) Insert(values ...interface{}) (int64, error) {
 	return result.RowsAffected()
 }
 
-// Find 获取 values表 中所有对象
+// Find 获取 values表 中所有对象, values 是对象类型的切片地址
 func (s *Session) Find(values interface{}) error {
 	destSlice := reflect.Indirect(reflect.ValueOf(values))
 	destType := destSlice.Type().Elem() // 切片包含的元素的type
@@ -46,7 +46,8 @@ func (s *Session) Find(values interface{}) error {
 		if err := rows.Scan(values...); err != nil {
 			return err
 		} // 调用 rows.Scan() 将该行记录每一列的值依次赋值给 values 中的每一个字段
-		destSlice.Set(reflect.Append(destSlice, dest))
+		s.CallMethod(AfterQuery, dest.Addr().Interface()) // AfterQuery 钩子可以操作每一行记录。
+		destSlice.Set(reflect.Append(destSlice, dest))    // 向切片中添加元素
 	}
 	return rows.Close()
 }

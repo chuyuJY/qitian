@@ -43,7 +43,7 @@ func (engine *Engine) Close() {
 	if err := engine.db.Close(); err != nil {
 		log.Error("Failed to close database")
 	}
-	log.Error("Close database success")
+	log.Info("Close database success")
 }
 
 // NewSession 通过 Engine 建立 Session
@@ -69,7 +69,8 @@ func (engine *Engine) Transaction(f txFunc) (result interface{}, err error) {
 	return f(s)
 }
 
-// difference returns a - b
+// difference returns a - b 即: 新表 - 旧表 = 新增字段，旧表 - 新表 = 删除字段
+// a: a表的字段  b: b表的字段
 func difference(a []string, b []string) (diff []string) {
 	mapB := map[string]bool{}
 	for _, v := range b {
@@ -85,16 +86,22 @@ func difference(a []string, b []string) (diff []string) {
 }
 
 // Migrate 迁移表
+// value: 新表的结构体对象
 func (engine *Engine) Migrate(value interface{}) error {
+	// 利用事务 保持原子性
 	_, err := engine.Transaction(func(s *session.Session) (result interface{}, err error) {
 		if !s.Model(value).HasTable() {
 			log.Infof("table %s doesn't exist", s.RefTable().Name)
 			return nil, s.CreateTable()
 		}
+		// table 是新表的结构
 		table := s.RefTable()
+		// 查询旧表
 		rows, _ := s.Raw(fmt.Sprintf("SELECT * FROM %s LIMIT 1", table.Name)).QueryRows()
 		columns, _ := rows.Columns()
+		// 增加的列
 		addCols := difference(table.FieldNames, columns)
+		// 删去的列
 		delCols := difference(columns, table.FieldNames)
 		log.Infof("added cols %v, deleted cols %v", addCols, delCols)
 
@@ -110,7 +117,7 @@ func (engine *Engine) Migrate(value interface{}) error {
 		if len(delCols) == 0 {
 			return
 		}
-		// 只选旧表中指定列，转移到新表，删除旧表，新表改名为旧表
+		// 只选旧表中指定列(即新表的所有列)，转移到新表，删除旧表，新表改名为旧表
 		tmp := "tmp_" + table.Name
 		fieldStr := strings.Join(table.FieldNames, ", ")
 		s.Raw(fmt.Sprintf("CREATE TABLE %s AS SELECT %s from %s;", tmp, fieldStr, table.Name))
