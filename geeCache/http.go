@@ -19,7 +19,7 @@ const (
 	defaultReplicas = 50
 )
 
-// 承载节点间 HTTP 通信的核心数据结构
+// HTTPPool 承载节点间 HTTP 通信的核心数据结构
 type HTTPPool struct {
 	self        string                 // 记录自己的地址，包括主机名/IP 和端口
 	basePath    string                 // 节点间通讯地址的前缀，默认是 /_geecache/
@@ -103,6 +103,7 @@ type httpGetter struct {
 	baseURL string
 }
 
+// Get 从远程缓存节点获得缓存值
 func (h *httpGetter) Get(in *pb.Request, out *pb.Response) error {
 	u := fmt.Sprintf(
 		// baseURL 表示将要访问的远程节点的地址

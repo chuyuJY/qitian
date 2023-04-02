@@ -1,6 +1,7 @@
 package gee
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"path"
@@ -35,6 +36,7 @@ func parsePattern(pattern string) []string {
 			}
 		}
 	}
+	fmt.Println(parts)
 	return parts
 }
 
@@ -53,6 +55,7 @@ func (r *router) addRoute(method string, pattern string, handler HandlerFunc) {
 
 func (r *router) getRoute(method string, pattern string) (*node, map[string]string) {
 	searchParts := parsePattern(pattern)
+	//fmt.Println("getRoute: ", searchParts)
 	root, ok := r.roots[method]
 	if !ok {
 		return nil, nil
@@ -92,12 +95,12 @@ func (r *router) handle(c *Context) {
 	c.Next()
 }
 
-// 路由组
+// RouteGroup 路由组
 type RouteGroup struct {
 	prefix      string
 	middlewares []HandlerFunc // support middlewares
 	parent      *RouteGroup   // support nesting
-	engine      *Engine       // all groups share a Engine instance
+	engine      *Engine       // all groups share an Engine instance
 }
 
 // Group is defined to create a new RouterGroup

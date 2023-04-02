@@ -17,7 +17,7 @@ type Cache struct {
 // 双向链表节点的数据类型
 type entry struct {
 	key   string
-	value Value
+	value Value // []byte
 }
 
 // 为了通用性, 允许值是实现了 Value 接口的任意类型

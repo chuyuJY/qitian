@@ -20,7 +20,7 @@ import (
                             |-----> 调用`回调函数`，获取值并添加到缓存 --> 返回缓存值 ⑶
 */
 
-// 未命中时从数据源获取数据
+// Getter 未命中时从数据源获取数据
 type Getter interface {
 	Get(key string) ([]byte, error) // 回调函数
 }
@@ -28,29 +28,30 @@ type Getter interface {
 // 函数类型实现某一个接口，称之为接口型函数。
 // 方便使用者在调用时既能够传入函数作为参数，也能够传入实现了该接口的结构体作为参数。
 // 是一个将函数转换为接口的技巧
+
 type GetterFunc func(key string) ([]byte, error)
 
-// 实现Getter接口
+// Get 实现Getter接口
 func (f GetterFunc) Get(key string) ([]byte, error) {
 	return f(key)
 }
 
 var (
-	// 对map的并发访问需要上锁
-	mu     sync.Mutex
-	groups = make(map[string]*Group)
+	mu     sync.RWMutex              // 对map的并发访问需要上锁
+	groups = make(map[string]*Group) // 存储所有的 Group
 )
 
-// 获取特定名称的Group
+// GetGroup 获取特定名称的Group
 func GetGroup(name string) *Group {
-	mu.Lock()
-	defer mu.Unlock()
+	mu.RLock()
+	defer mu.RUnlock()
 	g := groups[name]
 	return g
 }
 
-// 最核心的部分！
+// Group 最核心的部分！
 // 一个Group可被认为是一个缓存的命名空间
+// 比如可以创建三个 Group，缓存学生的成绩命名为 scores，缓存学生信息的命名为 info，缓存学生课程的命名为 courses。
 type Group struct {
 	name      string              // 缓存名字
 	getter    Getter              // 缓存未命中时获取源数据的回调(callback)
@@ -75,7 +76,7 @@ func NewGroup(name string, cacheBytes int64, getter Getter) *Group {
 	return g
 }
 
-// 注册一个PeerPicker, 用来选择远端peer
+// RegisterPeers 注册一个PeerPicker, 用来选择远端peer
 func (g *Group) RegisterPeers(peers PeerPicker) {
 	if g.peers != nil {
 		panic("RegisterPeerPicker called more than once")
@@ -83,7 +84,7 @@ func (g *Group) RegisterPeers(peers PeerPicker) {
 	g.peers = peers
 }
 
-// 获取键值对
+// Get 获取键值对
 func (g *Group) Get(key string) (ByteView, error) {
 	if key == "" {
 		return ByteView{}, errors.New("key is required")

@@ -9,14 +9,14 @@ import (
 // Insert 插入 values 到 sql
 func (s *Session) Insert(values ...interface{}) (int64, error) {
 	recordValues := make([]interface{}, 0)
-	for _, value := range values {
-		table := s.Model(value).RefTable()
-		s.clause.Set(clause.INSERT, table.Name, table.FieldNames)
-		recordValues = append(recordValues, table.RecordValues(value))
+	for _, value := range values { // 这里写的其实不好，插入对象其实要属于同一个表中
+		table := s.Model(value).RefTable()                             // 获取表的结构
+		s.clause.Set(clause.INSERT, table.Name, table.FieldNames)      // 构造插入语句前半段, 按理来说只需要构造一次
+		recordValues = append(recordValues, table.RecordValues(value)) // 得到每个对象内的参数值
 	}
 
 	s.clause.Set(clause.VALUES, recordValues...)
-	sql, vars := s.clause.Build(clause.INSERT, clause.VALUES)
+	sql, vars := s.clause.Build(clause.INSERT, clause.VALUES) // 对同一个表，一次性插入多个对象
 	result, err := s.Raw(sql, vars...).Exec()
 	if err != nil {
 		return 0, err
@@ -27,7 +27,7 @@ func (s *Session) Insert(values ...interface{}) (int64, error) {
 // Find 获取 values表 中所有对象
 func (s *Session) Find(values interface{}) error {
 	destSlice := reflect.Indirect(reflect.ValueOf(values))
-	destType := destSlice.Type().Elem() // 元素的type
+	destType := destSlice.Type().Elem() // 切片包含的元素的type
 	table := s.Model(reflect.New(destType).Elem().Interface()).RefTable()
 
 	s.clause.Set(clause.SELECT, table.Name, table.FieldNames)
@@ -38,14 +38,14 @@ func (s *Session) Find(values interface{}) error {
 	}
 
 	for rows.Next() {
-		dest := reflect.New(destType).Elem()
+		dest := reflect.New(destType).Elem() // 利用反射 创建 destType 的实例 dest
 		var values []interface{}
 		for _, name := range table.FieldNames {
 			values = append(values, dest.FieldByName(name).Addr().Interface())
 		}
 		if err := rows.Scan(values...); err != nil {
 			return err
-		}
+		} // 调用 rows.Scan() 将该行记录每一列的值依次赋值给 values 中的每一个字段
 		destSlice.Set(reflect.Append(destSlice, dest))
 	}
 	return rows.Close()
